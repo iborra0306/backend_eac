@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('huellas_talento', function (Blueprint $table){
             $table->id();
 
-            $table->string('ngsi_ld_id');
+            $table->string('ngsi_ld_id')->nullable();
             $table->json('payload');
 
             $table->foreignId('estudiante_id')
@@ -26,7 +26,7 @@ return new class extends Migration
                 ->cascadeOnDelete();
 
             $table->timestamps();
-            $table->timestamp('generada_en');
+            $table->timestamp('generada_en')->useCurrent();
         });
     }
 

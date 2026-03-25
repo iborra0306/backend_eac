@@ -2,18 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\CicloFormativo;
-use App\Models\CriterioEvaluacion;
-use App\Models\EcosistemaLaboral;
-use App\Models\FamiliaProfesional;
-use App\Models\Matricula;
-use App\Models\Modulo;
-use App\Models\NodoRequisito;
-use App\Models\PerfilHabilitacion;
-use App\Models\ResultadoAprendizaje;
-use App\Models\Role;
-use App\Models\SituacionCompetencia;
-use App\Models\User;
+// Usamos namespace para tener que importar a mano todos los modelos que hay
+namespace App\Models;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;

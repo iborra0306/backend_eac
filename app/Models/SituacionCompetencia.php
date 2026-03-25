@@ -12,7 +12,8 @@ class SituacionCompetencia extends Model
     protected $table = 'situaciones_competencia';
 
     protected $fillable = [
-        'ecosistema_laboral_id', 'codigo', 'titulo', 'descripcion', 'umbral_maestria', 'nivel_complejidad', 'activa'
+        'ecosistema_laboral_id', 'codigo', 'titulo',
+        'descripcion', 'umbral_maestria', 'nivel_complejidad', 'activa'
     ];
 
     //Relación con EcosistemaLaboral (belongsTo)
@@ -28,25 +29,25 @@ class SituacionCompetencia extends Model
         return $this->hasMany(NodoRequisito::class);
     }
 
-    //Relación de prerequisitos (belongsToMany a sí mismo)
-    public function situacionesCompetenciaPrerequisitos(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            SituacionCompetencia::class, // Tabla a la que va
-            'situaciones_competencia_prerequisitos', // Tabla intermedia
-            'situacion_competencia_id', // FK en la clave intermedia
-            'prerequisito_id' // FK en la clave intermedia
-        );
-    }
-
-    //Relación de dependientes (belongsToMany a sí mismo)
-    public function situacionesCompetenciaDependientes(): BelongsToMany
+    // SCs que deben estar conquistadas ANTES de acceder a esta SC
+    public function prerequisitos(): BelongsToMany
     {
         return $this->belongsToMany(
             SituacionCompetencia::class,
-            'situaciones_competencia_dependientes',
-            'situacion_competencia_id',
-            'dependiente_id'
+            'sc_precedencia',
+            'sc_id',           // esta SC
+            'sc_requisito_id'  // sus prerequisitos
+        );
+    }
+
+    // SCs que requieren esta SC como prerequisito
+    public function dependientes(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            SituacionCompetencia::class,
+            'sc_precedencia',
+            'sc_requisito_id', // esta SC es el requisito
+            'sc_id'            // las SCs que la necesitan
         );
     }
 
@@ -61,22 +62,26 @@ class SituacionCompetencia extends Model
         )->withPivot('peso_en_sc');
     }
 
-    //Relación con PerfilesHabilitacion a través de PerfilSituacion (belongsToMany)
-    public function perfilesHabilitacion(): BelongsToMany
+    public function criteriosEvaluacion(): BelongsToMany
     {
         return $this->belongsToMany(
-            PerfilHabilitacion::class,
-            'perfil_situacion',
+            CriterioEvaluacion::class,
+            'sc_criterios_evaluacion',
             'situacion_competencia_id',
-            'perfil_habilitacion_id'
-        );
+            'criterio_evaluacion_id'
+        )->withPivot('peso_en_sc');
+    }
+
+    public function perfilesHabilitacion(): HasMany
+    {
+        return $this->hasMany(PerfilSituacion::class, 'situacion_competencia_id');
     }
 
     // Cast
     protected function casts(): array
     {
         return [
-            'umbral_maestria' => 'decimal',
+            'umbral_maestria' => 'decimal:2',
             'activa' => 'boolean'
         ];
     }

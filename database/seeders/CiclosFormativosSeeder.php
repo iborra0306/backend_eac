@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\FamiliaProfesional;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,12 @@ class CiclosFormativosSeeder extends Seeder
     {
         // Ruta
         $path = database_path('seeders/csv/ciclos.csv');
+
+        // Control de errores
+        if (!file_exists($path)) {
+            $this->command->error("CSV no encontrado: $path");
+            return;
+        }
 
         // Leer y parsear
         $rows = array_map('str_getcsv', file($path));
@@ -31,17 +38,17 @@ class CiclosFormativosSeeder extends Seeder
 
             $rec = array_combine($header, $row);
 
-            
-            $familiaId = DB::table('familias_profesionales')
-                ->where('codigo', trim($rec['familia']))
-                ->value('id');
+
+            //$familiaId = DB::table('familias_profesionales')
+            //    ->where('codigo', trim($rec['familia']))
+            //    ->value('id');
 
             $data[] = [
                 'nombre' => trim($rec['nombre'] ?? ''),
                 'codigo' => trim($rec['cod_ciclo'] ?? ''),
-                'familia_profesional_id' => $familiaId,
+                'familia_profesional_id' => FamiliaProfesional::where('codigo', trim($rec['familia'] ?? ''))->first()->id,
                 'grado' => trim($rec['nivel'] ?? ''),
-                'descripcion' => null,
+                //'descripcion' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];

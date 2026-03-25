@@ -2,77 +2,97 @@
 
 namespace Database\Seeders;
 
+use App\Models\CicloFormativo;
+use App\Models\Modulo;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ModulosSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
-    public function run(): void
-{
-    $pathModulos = database_path('seeders/csv/modulos.csv');
-    $pathRelaciones = database_path('seeders/csv/ciclo_modulo_relaciones.csv'); // El segundo CSV
+     public function run(): void
+    {
+        // Deshabilitar temporalmente la verificación de claves foráneas para evitar errores al insertar módulos sin ciclos formativos existentes
+        Schema::disableForeignKeyConstraints();
 
-    if (!file_exists($pathModulos) || !file_exists($pathRelaciones)) {
-        $this->command->error("Faltan archivos CSV.");
-        return;
-    }
+        $path = database_path('seeders/csv/modulos.csv');
 
-    // 1. CARGAMOS LAS RELACIONES EN UN ARRAY PARA CONSULTAR RÁPIDO
-    // Queremos algo como: ['483' => '12242002', '484' => '12242002', ...]
-    $relacionesRows = array_map('str_getcsv', file($pathRelaciones));
-    $relHeader = array_map('trim', array_shift($relacionesRows));
-    $mapaCiclos = [];
-    foreach ($relacionesRows as $row) {
-        $rel = array_combine($relHeader, $row);
-        // Guardamos: el código del módulo es la llave, el código del ciclo el valor
-        $mapaCiclos[trim($rel['cod_modulo'])] = trim($rel['cod_ciclo']);
-    }
-
-    // 2. PROCESAMOS LOS MÓDULOS
-    $rows = array_map('str_getcsv', file($pathModulos));
-    $header = array_map('trim', array_shift($rows));
-
-    $data = [];
-    foreach ($rows as $row) {
-        if (count($row) < count($header)) continue;
-        $rec = array_combine($header, $row);
-
-        $codModulo = trim($rec['cod_modulo']);
-
-        // Buscamos el código del ciclo que corresponde a este módulo en nuestro mapa
-        $codCiclo = $mapaCiclos[$codModulo] ?? null;
-
-        // Ahora buscamos el ID real (el número 1, 2, 3...) de ese ciclo en la DB
-        $cicloId = null;
-        if ($codCiclo) {
-            $cicloId = DB::table('ciclos_formativos')
-                ->where('codigo', $codCiclo)
-                ->value('id');
+        if (!file_exists($path)) {
+            $this->command->error("CSV no encontrado: $path");
+            return;
         }
 
-        $data[] = [
-            'nombre' => trim($rec['nombre_modulo'] ?? ''),
-            'codigo' => $codModulo,
-            'ciclo_formativo_id' => $cicloId, // ¡Ya tenemos el ID!
-            'descripcion' => null,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
-    }
+        // Leer todas las líneas y parsear con str_getcsv
+        $rows = array_map('str_getcsv', file($path));
 
-    // 3. INSERTAR
-    DB::transaction(function () use ($data) {
-        foreach (array_chunk($data, 200) as $chunk) {
-            DB::table('modulos')->upsert(
-                $chunk,
-                ['codigo'],
-                ['nombre', 'ciclo_formativo_id', 'updated_at']
-            );
+        // El primer registro es la cabecera
+        $header = array_map('trim', array_shift($rows));
+
+        $data = [];
+        foreach ($rows as $row) {
+            // Ignorar filas vacías o mal formadas
+            if (count($row) < count($header)) {
+                continue;
+            }
+
+            $rec = array_combine($header, $row);
+
+            $data[] = [
+                'codigo' => trim($rec['cod_modulo'] ?? ''),
+                'nombre' => trim($rec['nombre_modulo'] ?? ''),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
         }
-    });
-}
+
+        // Insertar/actualizar usando upsert para evitar duplicados por 'codigo'
+        DB::transaction(function () use ($data) {
+            foreach (array_chunk($data, 200) as $chunk) {
+                DB::table('modulos')->upsert(
+                    $chunk,
+                    ['codigo'], // llave única para evitar duplicados
+                    ['nombre', 'descripcion', 'updated_at']
+                );
+            }
+        });
+
+        $path = database_path('seeders/csv/ciclo_modulo_relaciones.csv');
+
+        if (!file_exists($path)) {
+            $this->command->error("CSV no encontrado: $path");
+            return;
+        }
+
+        // Leer todas las líneas y parsear con str_getcsv
+        $rows = array_map('str_getcsv', file($path));
+
+        // El primer registro es la cabecera
+        $header = array_map('trim', array_shift($rows));
+
+        $data = [];
+        foreach ($rows as $row) {
+            // Ignorar filas vacías o mal formadas
+            if (count($row) < count($header)) {
+                continue;
+            }
+
+            $rec = array_combine($header, $row);
+
+            $ciclo = CicloFormativo::where('codigo', trim($rec['cod_ciclo'] ?? ''))->first();
+            if (!$ciclo) {
+                $this->command->error("Ciclo formativo no encontrado para código: " . trim($rec['cod_ciclo'] ?? ''));
+                continue;
+            }
+
+            Modulo::where('codigo', trim($rec['cod_modulo'] ?? ''))->update([
+                'ciclo_formativo_id' => $ciclo->id,
+            ]);
+        }
+
+        Schema::enableForeignKeyConstraints();
+    }
 }

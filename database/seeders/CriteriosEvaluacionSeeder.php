@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Modulo;
+use App\Models\ResultadoAprendizaje;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -33,27 +35,24 @@ class CriteriosEvaluacionSeeder extends Seeder
             if (count($row) < count($header)) continue;
             $rec = array_combine($header, $row);
 
-            $idModulo = trim($rec['cod_modulo']);
-            $idRa = trim($rec['id_ra']);
+            $moduloId = Modulo::where('codigo', trim($rec['cod_modulo'] ?? ''))->first()->id ?? null;
 
-            // Buscamos el ID del RA que insertamos en el seeder anterior
-            // Filtramos por el código del RA y por el módulo al que pertenece
-            $raId = DB::table('resultados_aprendizaje')
-                ->where('codigo', $idRa)
-                ->whereIn('modulo_id', function($query) use ($idModulo) {
-                    $query->select('id')->from('modulos')->where('codigo', $idModulo);
-                })
-                ->value('id');
+            if(!$moduloId) {
+                $this->command->warn("Módulo no encontrado para código '{$rec['cod_modulo']}'");
+                continue;
+            }
 
-            if ($raId === null) {
-                // Si no lo encuentra, nos saltamos esta fila en lugar de intentar meter un null
+            $resultadoId = ResultadoAprendizaje::where(['modulo_id' => $moduloId, 'codigo' => "RA" . trim($rec['id_ra'] ?? '')])->first()->id ?? null;
+
+            if(!$resultadoId) {
+                $this->command->warn("Resultado de aprendizaje no encontrado para módulo '{$rec['cod_modulo']}' y RA 'RA{$rec['id_ra']}'");
                 continue;
             }
 
             $data[] = [
-                'resultado_aprendizaje_id' => $raId,
-                'codigo' => trim($rec['id_criterio']),
-                'descripcion' => trim($rec['definicion'] ?? ''),
+                'resultado_aprendizaje_id' => $resultadoId ,
+                'codigo' => trim($rec['id_criterio'] ?? ''),
+                'descripcion' => $rec['definicion'] ?? null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];

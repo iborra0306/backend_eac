@@ -37,14 +37,10 @@ class ResultadosAprendizajeSeeder extends Seeder
 
             $rec = array_combine($header, $row);
 
-            $moduloId = DB::table('modulos')
-                ->where('codigo', trim($rec['cod_modulo']))
-                ->value('id');
-
             $data[] = [
-                'modulo_id' => $moduloId,
-                'codigo' => trim($rec['cod_modulo']), // cogemos cod_modulo porque asi esta definido en el .csv
-                'descripcion' => trim($rec['definicion' ?? '']), // Definicion es lo unico definido en el .csv
+                'modulo_id' => DB::table('modulos')->where('codigo', trim($rec['cod_modulo'] ?? ''))->value('id'),
+                'codigo' => "RA" . trim($rec['id_ra'] ?? ''),
+                'descripcion' => trim($rec['definicion'] ?? null), // Definicion es lo unico definido en el .csv
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
@@ -55,7 +51,7 @@ class ResultadosAprendizajeSeeder extends Seeder
             foreach (array_chunk($data, 200) as $chunk) {
                 DB::table('resultados_aprendizaje')->upsert(
                     $chunk,
-                    ['codigo'], // llave única para evitar duplicados
+                    ['codigo', 'modulo_id'], // llave única para evitar duplicados
                     ['descripcion', 'updated_at'] // hemos quitado nombre porque no aparece en el csv
                 );
             }
