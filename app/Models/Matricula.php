@@ -13,4 +13,10 @@ class Matricula extends Model
         'estudiante_id',
         'modulo_id'
     ];
+
+    public function estudiante()
+    {
+        return $this->belongsTo(User::class, 'estudiante_id');
+    }
+
 }
