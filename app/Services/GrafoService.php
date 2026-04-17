@@ -173,26 +173,45 @@ class GrafoService
      */
     public function ordenTopologico(EcosistemaLaboral $ecosistema): Collection
     {
+        // Dependientes --> para restar los requisitos, si no no encuentra a quien restar requisitos
         $scs = $ecosistema->situacionesCompetencia()
-            ->with('prerequisitos:id,codigo')
+            ->with('prerequisitos:id,codigo', 'dependientes')
             ->get()
             ->keyBy('id');
 
         // Calcular grado de entrada de cada nodo
-        $gradoEntrada = $scs->mapWithKeys(fn($sc) => [$sc->id => 0]);
+        // Trabajar con array para que funcione ++ o --
+        $gradoEntrada = [];
+        foreach ($scs as $id => $sc) {
+            $gradoEntrada[$id] = 0; // Inicializo a 0
+        }
 
+        // Mete todos los cs en el array a 0
         foreach ($scs as $sc) {
             foreach ($sc->prerequisitos as $pre) {
-                $gradoEntrada[$sc->id]++;
+                // Evita error si un prerrequisito apunta a un ID inexistente
+                if (isset($gradoEntrada[$sc->id])) {
+                    // Si tiene un prerrequisito le sumamos 1
+                    $gradoEntrada[$sc->id]++;
+                }
             }
         }
 
         // Cola inicial: SCs sin prerequisitos
-        $cola      = $gradoEntrada->filter(fn($grado) => $grado === 0)->keys()->toArray();
+        // Usamos un array normal
+        $cola = [];
+        foreach ($gradoEntrada as $id => $grado) {
+            if ($grado === 0) {
+                $cola[] = $id;
+            }
+        }
         $resultado = collect();
 
         while (!empty($cola)) {
             $id = array_shift($cola);
+
+            if (!isset($scs[$id])) continue;
+
             $resultado->push($scs[$id]);
 
             // Reducir grado de entrada de los dependientes
