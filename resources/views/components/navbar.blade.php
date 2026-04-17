@@ -6,28 +6,28 @@
             <div class="flex items-center space-x-3">
                 <a href="{{ route('publico.portada') }}" class="flex items-center space-x-2">
                     <span class="text-vfds-accent font-bold text-xl tracking-tight">VFDS</span>
-                    <span class="text-white text-sm font-light hidden sm:block">Backend EAC</span>
+                    <span class="text-black text-sm font-light hidden sm:block">Backend EAC</span>
                 </a>
             </div>
 
             <div class="hidden md:flex items-center space-x-6">
                 <a href="{{ route('publico.modulos.index') }}"
-                   class="text-gray-300 hover:text-white text-sm transition-colors
-                          {{ request()->routeIs('publico.modulos*') ? 'text-white font-semibold' : '' }}">
+                   class="text-gray-300 hover:text-black text-sm transition-colors
+                          {{ request()->routeIs('publico.modulos*') ? 'text-black font-semibold' : '' }}">
                     Catálogo
                 </a>
                 @auth
                     @role('estudiante')
                         <a href="{{ route('estudiante.dashboard') }}"
-                           class="text-gray-300 hover:text-white text-sm transition-colors
-                                  {{ request()->routeIs('estudiante.*') ? 'text-white font-semibold' : '' }}">
+                           class="text-gray-300 hover:text-black text-sm transition-colors
+                                  {{ request()->routeIs('estudiante.*') ? 'text-black font-semibold' : '' }}">
                             Mi espacio
                         </a>
                     @endrole
                     @role('docente')
                         <a href="{{ route('docente.dashboard') }}"
-                           class="text-gray-300 hover:text-white text-sm transition-colors
-                                  {{ request()->routeIs('docente.*') ? 'text-white font-semibold' : '' }}">
+                           class="text-gray-300 hover:text-black text-sm transition-colors
+                                  {{ request()->routeIs('docente.*') ? 'text-black font-semibold' : '' }}">
                             Mi docencia
                         </a>
                     @endrole
@@ -36,7 +36,7 @@
 
             <div class="flex items-center space-x-3">
                 @guest
-                    <a href="{{ route('login') }}" class="text-gray-300 hover:text-white text-sm">
+                    <a href="{{ route('login') }}" class="text-gray-300 hover:text-black text-sm">
                         Entrar
                     </a>
                 @endguest
@@ -47,7 +47,7 @@
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit"
-                                class="text-gray-300 hover:text-white text-sm transition-colors">
+                                class="text-gray-300 hover:text-black text-sm transition-colors">
                             Salir
                         </button>
                     </form>
