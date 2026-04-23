@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use App\Services\CalificacionService;
 
 class ConquistaController extends Controller
 {
@@ -86,10 +87,7 @@ class ConquistaController extends Controller
 
             // Recalcular calificación actual del perfil
             // (lógica completa en Unidad 7; aquí usamos media ponderada simple)
-            $nuevaCalificacion = $perfil->situacionesConquistadas()
-                ->avg('perfil_situacion.puntuacion_conquista');
-
-            $perfil->update(['calificacion_actual' => round($nuevaCalificacion, 2)]);
+            $this->calificacionService->calcularYPersistir($perfil->fresh());
         });
 
         return response()->json([
@@ -117,4 +115,8 @@ class ConquistaController extends Controller
 
         abort_unless($esDocente, 403, 'No tienes rol de docente en este ecosistema.');
     }
+
+    public function __construct(
+        private readonly CalificacionService $calificacionService,
+    ) {}
 }
