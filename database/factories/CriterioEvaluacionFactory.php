@@ -16,16 +16,11 @@ class CriterioEvaluacionFactory extends Factory
     public function definition(): array
     {
         return [
-            // Si no le pasas un RA, crea uno nuevo automáticamente
-            'resultado_aprendizaje_id' => ResultadoAprendizaje::factory(),
-
-            // Genera algo tipo "CE1a", "CE2b"...
-            // El lexify pone una letra aleatoria al final
-            'codigo' => $this->faker->unique()->lexify('CE' . $this->faker->numberBetween(1, 9) . '?'),
-
-            'descripcion' => $this->faker->paragraph(1),
-            'created_at' => now(),
-            'updated_at' => now(),
+            'resultado_aprendizaje_id' => \App\Models\ResultadoAprendizaje::factory(),
+            'codigo'                   => 'CE' . $this->faker->unique()->bothify('#?'),
+            'descripcion'              => $this->faker->sentence(),
+            // 'peso_porcentaje'          => $this->faker->randomElement([20, 25, 30, 50]),
+            // 'orden'                    => $this->faker->numberBetween(1, 10),
         ];
     }
 }

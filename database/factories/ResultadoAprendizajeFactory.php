@@ -21,15 +21,11 @@ class ResultadoAprendizajeFactory extends Factory
     public function definition(): array
     {
         return [
-            // Crea un módulo automáticamente si no se le pasa uno
-            'modulo_id'   => Modulo::factory(),
-
-            // Genera un código único de hasta 5 caracteres (ej: RA1, RA25)
-            'codigo'      => 'RA' . $this->faker->unique()->numberBetween(1, 999),
-
-            'descripcion' => $this->faker->sentence(10),
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'modulo_id'       => \App\Models\Modulo::factory(),
+            'codigo'          => 'RA' . $this->faker->unique()->numberBetween(1, 99),
+            'descripcion'     => $this->faker->sentence(),
+            // 'peso_porcentaje' => $this->faker->randomElement([25, 30, 35, 40]),
+            // 'orden'           => $this->faker->numberBetween(1, 10),
         ];
     }
 }
